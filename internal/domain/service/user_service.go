@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/tienloinguyen22/go-clean-architecture/internal/domain/entity"
+	"github.com/tienloinguyen22/go-clean-architecture/internal/domain/event"
 	"github.com/tienloinguyen22/go-clean-architecture/internal/domain/repository"
 )
 
@@ -18,11 +19,15 @@ type IUserService interface {
 }
 
 type UserService struct {
-	userRepo repository.IUserRepository
+	userRepo       repository.IUserRepository
+	eventPublisher event.IEventPublisher
 }
 
-func NewUserService(userRepo repository.IUserRepository) IUserService {
-	return &UserService{userRepo: userRepo}
+func NewUserService(userRepo repository.IUserRepository, eventPublisher event.IEventPublisher) IUserService {
+	return &UserService{
+		userRepo:       userRepo,
+		eventPublisher: eventPublisher,
+	}
 }
 
 func (s *UserService) GetUserByID(ctx context.Context, id string) (*entity.User, error) {
@@ -42,7 +47,16 @@ func (s *UserService) CreateUser(ctx context.Context, user *entity.User) error {
 
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
-	return s.userRepo.Create(ctx, user)
+
+	if err := s.userRepo.Create(ctx, user); err != nil {
+		return err
+	}
+
+	if err := s.eventPublisher.Publish("user.created", event.NewUserCreatedEvent(user)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, user *entity.User) error {

@@ -15,6 +15,7 @@ import (
 	"github.com/tienloinguyen22/go-clean-architecture/internal/domain/service"
 	"github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/configs"
 	"github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/database"
+	"github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/event"
 	"github.com/tienloinguyen22/go-clean-architecture/internal/interface/api"
 )
 
@@ -22,8 +23,10 @@ func main() {
 	// Init configs
 	configs := configs.InitAppConfigs()
 	fmt.Printf("Welcome to Go Clean Architecture Project!\n")
-	fmt.Printf("Database Host: %s\n", configs.PostgresConfig.Host)
-	fmt.Printf("Database Port: %v\n", configs.PostgresConfig.Port)
+	fmt.Printf("Postgres Host: %s\n", configs.PostgresConfig.Host)
+	fmt.Printf("Postgres Port: %v\n", configs.PostgresConfig.Port)
+	fmt.Printf("Redis Host: %s\n", configs.RedisConfig.Host)
+	fmt.Printf("Redis Port: %v\n", configs.RedisConfig.Port)
 	fmt.Printf("Server running on port: %v\n", configs.Port)
 
 	// Setup database
@@ -40,11 +43,23 @@ func main() {
 	}
 	defer db.Close()
 
+	// Setup pubsub
+	ps, err := event.NewPubSub(&event.RedisConfig{
+		Host:     configs.RedisConfig.Host,
+		Port:     configs.RedisConfig.Port,
+		Password: configs.RedisConfig.Password,
+		DB:       configs.RedisConfig.DB,
+	})
+	if err != nil {
+		log.Fatal("Failed to connect to redis", err)
+	}
+	defer ps.Close()
+
 	// Setup repositories
 	userRepository := database.NewUserRepository(db)
 
 	// Setup services
-	userService := service.NewUserService(userRepository)
+	userService := service.NewUserService(userRepository, ps)
 
 	// Setup handlers
 	healthHandler := api.NewHeathHandler()

@@ -11,6 +11,7 @@ import (
 type AppConfigs struct {
 	Port           int
 	PostgresConfig PostgresConfig
+	RedisConfig    RedisConfig
 }
 
 type PostgresConfig struct {
@@ -20,6 +21,13 @@ type PostgresConfig struct {
 	Password string
 	DBName   string
 	SSLMode  string
+}
+
+type RedisConfig struct {
+	Host     string
+	Port     int
+	Password string
+	DB       int
 }
 
 func InitAppConfigs() *AppConfigs {
@@ -38,6 +46,16 @@ func InitAppConfigs() *AppConfigs {
 		log.Fatal("Invalid POSTGRES_PORT value")
 	}
 
+	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
+	if err != nil {
+		log.Fatal("Invalid REDIS_PORT value")
+	}
+
+	redisDB, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		log.Fatal("Invalid REDIS_DB value")
+	}
+
 	return &AppConfigs{
 		Port: port,
 		PostgresConfig: PostgresConfig{
@@ -47,6 +65,12 @@ func InitAppConfigs() *AppConfigs {
 			Password: os.Getenv("POSTGRES_PASSWORD"),
 			DBName:   os.Getenv("POSTGRES_DB"),
 			SSLMode:  os.Getenv("POSTGRES_SSLMODE"),
+		},
+		RedisConfig: RedisConfig{
+			Host:     os.Getenv("REDIS_HOST"),
+			Port:     redisPort,
+			Password: os.Getenv("REDIS_PASSWORD"),
+			DB:       redisDB,
 		},
 	}
 }
