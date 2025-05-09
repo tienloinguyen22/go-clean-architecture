@@ -10,8 +10,8 @@ services:
       PGDATA: /data/postgres
     volumes:
        - postgres-data:/data/postgres
-       - ./init-db/init.sh:/init.sh
-    command: ["bash", "/init.sh"]
+       - ./init-db:/init-db
+    command: ["bash", "/init-db/init.sh"]
     ports:
       - '5432:5432'
     restart: unless-stopped
