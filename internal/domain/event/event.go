@@ -9,7 +9,7 @@ type Event struct {
 	Timestamp time.Time
 }
 
-type EventHandler func(channel string, payload interface{})
+type EventHandler func(channel string, payload string)
 
 type IEventPublisher interface {
 	Publish(channel string, event Event) error

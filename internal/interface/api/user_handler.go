@@ -11,15 +11,15 @@ import (
 	"github.com/tienloinguyen22/go-clean-architecture/pkg/httputils"
 )
 
-type UserHandler struct {
+type UserAPIHandler struct {
 	UserService service.IUserService
 }
 
-func NewUserHandler(userService service.IUserService) *UserHandler {
-	return &UserHandler{UserService: userService}
+func NewUserAPIHandler(userService service.IUserService) *UserAPIHandler {
+	return &UserAPIHandler{UserService: userService}
 }
 
-func (h *UserHandler) HandleGetUserByID(w http.ResponseWriter, r *http.Request) {
+func (h *UserAPIHandler) HandleGetUserByID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := chi.URLParam(r, "id")
 	user, err := h.UserService.GetUserByID(ctx, id)
@@ -36,7 +36,7 @@ func (h *UserHandler) HandleGetUserByID(w http.ResponseWriter, r *http.Request) 
 	httputils.ResonseWithJSON(w, http.StatusOK, user)
 }
 
-func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserAPIHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var user entity.User
 	decoder := json.NewDecoder(r.Body)
@@ -54,7 +54,7 @@ func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	httputils.ResonseWithJSON(w, http.StatusCreated, user)
 }
 
-func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserAPIHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := chi.URLParam(r, "id")
 	var user entity.User
@@ -74,7 +74,7 @@ func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	httputils.ResonseWithJSON(w, http.StatusOK, user)
 }
 
-func (h *UserHandler) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserAPIHandler) HandleDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := chi.URLParam(r, "id")
 	if err := h.UserService.DeleteUser(ctx, id); err != nil {

@@ -6,14 +6,14 @@ import (
 	"github.com/tienloinguyen22/go-clean-architecture/pkg/httputils"
 )
 
-type HeathHandler struct {
+type HeathAPIHandler struct {
 	// Empty
 }
 
-func NewHeathHandler() *HeathHandler {
-	return &HeathHandler{}
+func NewHeathAPIHandler() *HeathAPIHandler {
+	return &HeathAPIHandler{}
 }
 
-func (h *HeathHandler) HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
+func (h *HeathAPIHandler) HandleHealthCheck(w http.ResponseWriter, r *http.Request) {
 	httputils.ResonseWithJSON(w, http.StatusOK, nil)
 }

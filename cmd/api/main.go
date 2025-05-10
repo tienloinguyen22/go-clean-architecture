@@ -12,16 +12,18 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/tienloinguyen22/go-clean-architecture/internal/domain/event"
 	"github.com/tienloinguyen22/go-clean-architecture/internal/domain/service"
-	"github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/configs"
-	"github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/database"
-	"github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/event"
-	"github.com/tienloinguyen22/go-clean-architecture/internal/interface/api"
+	configInfra "github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/configs"
+	databaseInfra "github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/database"
+	eventInfra "github.com/tienloinguyen22/go-clean-architecture/internal/infrastructure/event"
+	apiInterface "github.com/tienloinguyen22/go-clean-architecture/internal/interface/api"
+	eventInterface "github.com/tienloinguyen22/go-clean-architecture/internal/interface/event"
 )
 
 func main() {
 	// Init configs
-	configs := configs.InitAppConfigs()
+	configs := configInfra.InitAppConfigs()
 	fmt.Printf("Welcome to Go Clean Architecture Project!\n")
 	fmt.Printf("Postgres Host: %s\n", configs.PostgresConfig.Host)
 	fmt.Printf("Postgres Port: %v\n", configs.PostgresConfig.Port)
@@ -30,7 +32,7 @@ func main() {
 	fmt.Printf("Server running on port: %v\n", configs.Port)
 
 	// Setup database
-	db, err := database.NewPostgresDB(&database.PostgresConfig{
+	db, err := databaseInfra.NewPostgresDB(&databaseInfra.PostgresConfig{
 		Host:     configs.PostgresConfig.Host,
 		Port:     configs.PostgresConfig.Port,
 		Username: configs.PostgresConfig.Username,
@@ -44,7 +46,7 @@ func main() {
 	defer db.Close()
 
 	// Setup pubsub
-	ps, err := event.NewPubSub(&event.RedisConfig{
+	ps, err := eventInfra.NewPubSub(&eventInfra.RedisConfig{
 		Host:     configs.RedisConfig.Host,
 		Port:     configs.RedisConfig.Port,
 		Password: configs.RedisConfig.Password,
@@ -56,24 +58,31 @@ func main() {
 	defer ps.Close()
 
 	// Setup repositories
-	userRepository := database.NewUserRepository(db)
+	userRepository := databaseInfra.NewUserRepository(db)
 
 	// Setup services
 	userService := service.NewUserService(userRepository, ps)
+	notificationService := service.NewNotificationService()
 
 	// Setup handlers
-	healthHandler := api.NewHeathHandler()
-	userHandler := api.NewUserHandler(userService)
+	healthApiHandler := apiInterface.NewHeathAPIHandler()
+	userApiHandler := apiInterface.NewUserAPIHandler(userService)
+	userEventHandler := eventInterface.NewUserEventHandler(notificationService)
 
 	// Setup router
 	router := chi.NewRouter()
-	router.Get("/health", healthHandler.HandleHealthCheck)
+	router.Get("/health", healthApiHandler.HandleHealthCheck)
 	router.Route("/api/v1", func(r chi.Router) {
-		r.Post("/users", userHandler.HandleCreateUser)
-		r.Get("/users/{id}", userHandler.HandleGetUserByID)
-		r.Put("/users/{id}", userHandler.HandleUpdateUser)
-		r.Delete("/users/{id}", userHandler.HandleDeleteUser)
+		r.Post("/users", userApiHandler.HandleCreateUser)
+		r.Get("/users/{id}", userApiHandler.HandleGetUserByID)
+		r.Put("/users/{id}", userApiHandler.HandleUpdateUser)
+		r.Delete("/users/{id}", userApiHandler.HandleDeleteUser)
 	})
+
+	// Setup event handlers
+	if err := ps.Subscribe(event.UsersChannel, userEventHandler.HandleUserCreatedEvent); err != nil {
+		log.Fatal("Failed to subscribe to users channel", err)
+	}
 
 	// Start server
 	server := &http.Server{
