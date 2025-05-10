@@ -52,7 +52,7 @@ func (s *UserService) CreateUser(ctx context.Context, user *entity.User) error {
 		return err
 	}
 
-	if err := s.eventPublisher.Publish("user.created", event.NewUserCreatedEvent(user)); err != nil {
+	if err := s.eventPublisher.Publish(event.UsersChannel, event.NewUserCreatedEvent(user)); err != nil {
 		return err
 	}
 

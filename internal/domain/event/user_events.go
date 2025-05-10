@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	UsersChannel     = "users"
 	UserCreatedEvent = "user.created"
 )
 

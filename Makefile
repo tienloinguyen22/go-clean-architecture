@@ -1,7 +1,7 @@
 .PHONY: run build test clean
 
 # Run the application
-run:
+start:
 	go run cmd/api/main.go
 
 # Build the application

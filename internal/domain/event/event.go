@@ -9,10 +9,12 @@ type Event struct {
 	Timestamp time.Time
 }
 
+type EventHandler func(channel string, payload interface{})
+
 type IEventPublisher interface {
 	Publish(channel string, event Event) error
 }
 
 type IEventSubscriber interface {
-	Subscribe(channel string, handler func(event Event)) error
+	Subscribe(channel string, handler EventHandler) error
 }
